@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -90,6 +92,20 @@ func runServer() {
 
 func main() {
 	fmt.Printf("Hello world!\n")
+
+	data := struct {
+		A int `json:"a"`
+	}{15}
+	payload, err := json.Marshal(data)
+	if err != nil {
+		fmt.Printf("payload error: %v\n", err)
+	}
+
+	s, err := sign(context.Background(), "/tmp/cosign.key", payload)
+	if err != nil {
+		fmt.Printf("sign error: %v\n", err)
+	}
+	fmt.Printf("signed: %v\n", string(s))
 
 	runServer()
 }
