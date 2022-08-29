@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
@@ -63,7 +64,30 @@ func verify(jwtB64 string) (*jwt.Token, error) {
 }
 
 func verifyClaims(token *jwt.Token) error {
-	return nil // TODO
+	fmt.Printf("get claims...\n")
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return fmt.Errorf("failed to parse claims")
+	}
+
+	fmt.Printf("check exists...\n")
+	_jobRef, exist := claims["job_workflow_ref"]
+	if !exist {
+		return fmt.Errorf("missing job workflow ref")
+	}
+
+	fmt.Printf("get jobref...\n")
+	jobRef, ok := _jobRef.(string)
+	if !ok {
+		return fmt.Errorf("failed to parse job ref")
+	}
+
+	fmt.Printf("check jobref...\n")
+	if !strings.HasPrefix(strings.ToLower(jobRef), "legit-labs") { // TODO full name
+		return fmt.Errorf("bad workflow ref")
+	}
+
+	return nil
 }
 
 func jwtPost(w http.ResponseWriter, req *http.Request) {
@@ -100,18 +124,21 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 	if err != nil {
 		fmt.Printf("jwt verification failed: %v\n", err)
 		http.Error(w, "jwt verification failed", http.StatusBadRequest)
+		return
 	}
 
 	fmt.Printf("verify claims\n")
 	if err := verifyClaims(token); err != nil {
 		fmt.Printf("jwt claims failed: %v\n", err)
 		http.Error(w, "jwt claims failed", http.StatusBadRequest)
+		return
 	}
 
 	attestation, err := sign(context.Background(), "/tmp/cosign.key", payloadBytes)
 	if err != nil {
 		fmt.Printf("sign error: %v\n", err)
 		http.Error(w, "failed to sign attestation", http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
