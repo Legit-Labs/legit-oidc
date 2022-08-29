@@ -42,42 +42,80 @@ func parseToken(jwtB64 string, jkwsJSON []byte) (*jwt.Token, error) {
 	return token, nil
 }
 
-func verify(jwtB64 string) error {
+func verify(jwtB64 string) (*jwt.Token, error) {
 	jkws, err := getJwks()
 	if err != nil {
-		return fmt.Errorf("failed to get jkws: %v", err)
+		return nil, fmt.Errorf("failed to get jkws: %v", err)
 	}
 
 	token, err := parseToken(jwtB64, jkws)
 	if err != nil {
-		return fmt.Errorf("failed to get token: %v", err)
+		return nil, fmt.Errorf("failed to get token: %v", err)
 	}
 
 	// Check if the token is valid.
 	if !token.Valid {
-		return fmt.Errorf("The token is not valid.")
+		return nil, fmt.Errorf("The token is not valid.")
 	}
 
 	log.Println("The token is valid.")
-	return nil
+	return token, nil
 }
-func jwtPost(w http.ResponseWriter, req *http.Request) {
-	jwt := req.Header.Get("authorization")
 
+func verifyClaims(token *jwt.Token) error {
+	return nil // TODO
+}
+
+func jwtPost(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
 		fmt.Printf("not a POST request: %v\n", req.Method)
+		http.Error(w, "expecting a POST", http.StatusMethodNotAllowed)
 		return
 	}
 
+	jwt := req.Header.Get("authorization")
 	if jwt == "" {
 		fmt.Printf("no auth header\n")
+		http.Error(w, "no auth header", http.StatusBadRequest)
 		return
 	}
 
-	err := verify(jwt)
+	fmt.Printf("check payload\n")
+	var payload interface{}
+	err := json.NewDecoder(req.Body).Decode(&payload)
 	if err != nil {
-		fmt.Printf("Failed: %v\n", err)
+		fmt.Printf("missing attestation payload\n")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Printf("fail json to bytes\n")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	fmt.Printf("verify token\n")
+	token, err := verify(jwt)
+	if err != nil {
+		fmt.Printf("jwt verification failed: %v\n", err)
+		http.Error(w, "jwt verification failed", http.StatusBadRequest)
+	}
+
+	fmt.Printf("verify claims\n")
+	if err := verifyClaims(token); err != nil {
+		fmt.Printf("jwt claims failed: %v\n", err)
+		http.Error(w, "jwt claims failed", http.StatusBadRequest)
+	}
+
+	attestation, err := sign(context.Background(), "/tmp/cosign.key", payloadBytes)
+	if err != nil {
+		fmt.Printf("sign error: %v\n", err)
+		http.Error(w, "failed to sign attestation", http.StatusInternalServerError)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(attestation)
 }
 
 func runServer() {
@@ -92,20 +130,5 @@ func runServer() {
 
 func main() {
 	fmt.Printf("Hello world!\n")
-
-	data := struct {
-		A int `json:"a"`
-	}{15}
-	payload, err := json.Marshal(data)
-	if err != nil {
-		fmt.Printf("payload error: %v\n", err)
-	}
-
-	s, err := sign(context.Background(), "/tmp/cosign.key", payload)
-	if err != nil {
-		fmt.Printf("sign error: %v\n", err)
-	}
-	fmt.Printf("signed: %v\n", string(s))
-
 	runServer()
 }
