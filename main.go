@@ -97,7 +97,7 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	jwt := req.Header.Get("authorization")
+	jwt := req.Header.Get("jwt")
 	if jwt == "" {
 		fmt.Printf("no auth header\n")
 		http.Error(w, "no auth header", http.StatusBadRequest)
