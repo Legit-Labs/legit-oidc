@@ -148,7 +148,12 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(attestation)
+	_, err = w.Write(attestation)
+	if err != nil {
+		fmt.Printf("write error: %v\n", err)
+		http.Error(w, "failed to write attestation", http.StatusInternalServerError)
+		return
+	}
 }
 
 func runServer() {
