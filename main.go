@@ -98,8 +98,11 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	bypass_jwt := os.Getenv("bypass_jwt") == "1"
+	fmt.Printf("bypass_jwt? %v\n", bypass_jwt)
+
 	jwt := req.Header.Get("jwt")
-	if jwt == "" {
+	if jwt == "" && !bypass_jwt {
 		fmt.Printf("no auth header\n")
 		http.Error(w, "no auth header", http.StatusBadRequest)
 		return
@@ -120,19 +123,21 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Printf("verify token\n")
-	token, err := verify(jwt)
-	if err != nil {
-		fmt.Printf("jwt verification failed: %v\n", err)
-		http.Error(w, "jwt verification failed", http.StatusBadRequest)
-		return
-	}
+	if !bypass_jwt {
+		fmt.Printf("verify token\n")
+		token, err := verify(jwt)
+		if err != nil {
+			fmt.Printf("jwt verification failed: %v\n", err)
+			http.Error(w, "jwt verification failed", http.StatusBadRequest)
+			return
+		}
 
-	fmt.Printf("verify claims\n")
-	if err := verifyClaims(token); err != nil {
-		fmt.Printf("jwt claims failed: %v\n", err)
-		http.Error(w, "jwt claims failed", http.StatusBadRequest)
-		return
+		fmt.Printf("verify claims\n")
+		if err := verifyClaims(token); err != nil {
+			fmt.Printf("jwt claims failed: %v\n", err)
+			http.Error(w, "jwt claims failed", http.StatusBadRequest)
+			return
+		}
 	}
 
 	attestation, err := sign(context.Background(), "/tmp/cosign.key", payloadBytes)
@@ -163,7 +168,7 @@ func main() {
 		runServer()
 	} else {
 		fmt.Printf("start client\n")
-		att, err := os.ReadFile("/tmp/att.jsonl2")
+		att, err := os.ReadFile("/tmp/att.jsonl")
 		if err != nil {
 			fmt.Printf("Failed to read /tmp/att.jsonl: %v\n", err)
 			return
