@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/MicahParks/keyfunc"
@@ -157,5 +158,21 @@ func runServer() {
 
 func main() {
 	fmt.Printf("Hello world!\n")
-	runServer()
+	if os.Getenv("server") == "1" {
+		fmt.Printf("start server\n")
+		runServer()
+	} else {
+		fmt.Printf("start client\n")
+		att, err := os.ReadFile("/tmp/att.jsonl2")
+		if err != nil {
+			fmt.Printf("Failed to read /tmp/att.jsonl: %v\n", err)
+			return
+		}
+		payload, err := verifiedPayload(context.Background(), "/tmp/cosign.pub", att)
+		if err != nil {
+			fmt.Printf("Failed: %v\n", err)
+		} else {
+			fmt.Printf("yay: %v\n", string(payload))
+		}
+	}
 }
