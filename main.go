@@ -12,6 +12,7 @@ import (
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
+	verifyattestation "github.com/legit-labs/legit-verify-attestation/verify-attestation"
 )
 
 func getJwks() ([]byte, error) {
@@ -173,16 +174,19 @@ func main() {
 		runServer()
 	} else {
 		fmt.Printf("start client\n")
-		att, err := os.ReadFile("/tmp/att.jsonl")
+		attestation, err := os.ReadFile("/tmp/att.jsonl")
 		if err != nil {
 			fmt.Printf("Failed to read /tmp/att.jsonl: %v\n", err)
 			return
 		}
-		payload, err := verifiedPayload(context.Background(), "/tmp/cosign.pub", att)
+		keyPath := "/tmp/cosign.pub"
+		payload, err := verifyattestation.VerifiedPayload(context.Background(), keyPath, attestation)
 		if err != nil {
 			fmt.Printf("Failed: %v\n", err)
+			return
 		} else {
 			fmt.Printf("yay: %v\n", string(payload))
 		}
+
 	}
 }

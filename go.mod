@@ -5,6 +5,8 @@ go 1.18
 require (
 	github.com/MicahParks/keyfunc v1.2.2
 	github.com/golang-jwt/jwt/v4 v4.4.2
+	github.com/legit-labs/legit-verify-attestation v0.0.0-20220905123851-b94263ef355f
+	github.com/secure-systems-lab/go-securesystemslib v0.4.0
 	github.com/sigstore/cosign v1.11.1
 	github.com/sigstore/sigstore v1.4.0
 )
@@ -120,7 +122,6 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sassoftware/relic v0.0.0-20210427151427-dfb082b79b74 // indirect
-	github.com/secure-systems-lab/go-securesystemslib v0.4.0 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/sigstore/rekor v0.11.0 // indirect
 	github.com/sirupsen/logrus v1.9.0 // indirect

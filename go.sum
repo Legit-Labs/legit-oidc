@@ -893,6 +893,8 @@ github.com/kylelemons/godebug v1.1.0/go.mod h1:9/0rRGxNHcop5bhtWyNeEfOS8JIWk580+
 github.com/kyoh86/exportloopref v0.1.8/go.mod h1:1tUcJeiioIs7VWe5gcOObrux3lb66+sBqGZrRkMwPgg=
 github.com/ldez/gomoddirectives v0.2.2/go.mod h1:cpgBogWITnCfRq2qGoDkKMEVSaarhdBr6g8G04uz6d0=
 github.com/ldez/tagliatelle v0.2.0/go.mod h1:8s6WJQwEYHbKZDsp/LjArytKOG8qaMrKQQ3mFukHs88=
+github.com/legit-labs/legit-verify-attestation v0.0.0-20220905123851-b94263ef355f h1:Dov9LA4I9MAtnIqq2O2KP3W8056h8H4ohW8hHRXz/e8=
+github.com/legit-labs/legit-verify-attestation v0.0.0-20220905123851-b94263ef355f/go.mod h1:7OVexnsX6TNbWMNKSzHMrhQQwiUBLArgl/xtd+RbtHA=
 github.com/leodido/go-urn v1.2.1 h1:BqpAaACuzVSgi/VLzGZIobT2z4v53pjosyNd9Yv6n/w=
 github.com/leodido/go-urn v1.2.1/go.mod h1:zt4jvISO2HfUBqxjfIshjdMTYS56ZS/qv49ictyFfxY=
 github.com/letsencrypt/boulder v0.0.0-20220723181115-27de4befb95e h1:2ba+yBBeT8ZFyZjRLPDKvkqVrWX4CCYAuR6nuJGojD0=
