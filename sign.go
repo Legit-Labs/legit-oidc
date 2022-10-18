@@ -23,12 +23,14 @@ func CmdExec(args ...string) error {
 
 const OUT_PATH = "/tmp/result.intoto.jsnol"
 
-func sign(ctx context.Context, key string, payload legit_remote_attest.RemoteAttestationData) ([]byte, error) {
+func sign(ctx context.Context, keyRef string, payload legit_remote_attest.RemoteAttestationData) ([]byte, error) {
 	// fmt.Printf("got: %#v\n", payload)
 
 	if err := payload.ApplyToEnv(); err != nil {
 		return nil, fmt.Errorf("failed to apply env: %v", err)
 	}
+
+	os.Setenv("PRIVATE_KEY_PATH", keyRef)
 
 	err := CmdExec("./generator", "attest", "--subjects", payload.SubjectsBase64, "--predicate", OUT_PATH)
 	if err != nil {
