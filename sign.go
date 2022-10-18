@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 
@@ -35,7 +34,6 @@ func sign(ctx context.Context, key string, payload legit_remote_attest.RemoteAtt
 	if err != nil {
 		return nil, fmt.Errorf("failed to attest: %v", err)
 	}
-	log.Printf("attest output: %v\n", res)
 
 	output, err := os.ReadFile(OUT_PATH)
 	if err != nil {
