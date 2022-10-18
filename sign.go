@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/legit-labs/legit-attestation/pkg/legit_attest"
 	"github.com/legit-labs/legit-attestation/pkg/legit_remote_attest"
 )
 
@@ -28,12 +29,15 @@ func sign(ctx context.Context, keyRef string, payload legit_remote_attest.Remote
 		return nil, fmt.Errorf("failed to apply env: %v", err)
 	}
 
-	os.Setenv("PRIVATE_KEY_PATH", keyRef)
-
 	output, err := CmdExec("./generator", "attest", "--subjects", payload.SubjectsBase64, "--signature", "", "--predicate", "")
 	if err != nil {
-		return nil, fmt.Errorf("failed to attest: %v", err)
+		return nil, fmt.Errorf("failed to generate provenance: %v", err)
 	}
 
-	return output, nil
+	signed, err := legit_attest.Attest(ctx, keyRef, output)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign attestation: %v", err)
+	}
+
+	return signed, nil
 }
