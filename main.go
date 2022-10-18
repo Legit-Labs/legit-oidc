@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,7 +13,7 @@ import (
 
 	"github.com/MicahParks/keyfunc"
 	"github.com/golang-jwt/jwt/v4"
-	verifyattestation "github.com/legit-labs/legit-verify-attestation/verify-attestation"
+	"github.com/legit-labs/legit-attestation/pkg/legit_remote_attest"
 )
 
 func getJwks() ([]byte, error) {
@@ -109,21 +110,6 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	fmt.Printf("check payload\n")
-	var payload interface{}
-	err := json.NewDecoder(req.Body).Decode(&payload)
-	if err != nil {
-		fmt.Printf("missing attestation payload\n")
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		fmt.Printf("fail json to bytes\n")
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	if !bypass_jwt {
 		fmt.Printf("verify token\n")
 		token, err := verify(jwt)
@@ -141,7 +127,16 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	attestation, err := sign(context.Background(), "/tmp/cosign.key", payloadBytes)
+	fmt.Printf("check payload\n")
+	var payload legit_remote_attest.RemoteAttestationData
+	err := json.NewDecoder(req.Body).Decode(&payload)
+	if err != nil {
+		fmt.Printf("missing attestation payload\n")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	attestation, err := sign(context.Background(), privateKeyPath, payload)
 	if err != nil {
 		fmt.Printf("sign error: %v\n", err)
 		http.Error(w, "failed to sign attestation", http.StatusInternalServerError)
@@ -167,26 +162,18 @@ func runServer() {
 	fmt.Printf("goodbye!\n")
 }
 
-func main() {
-	fmt.Printf("Hello world!\n")
-	if os.Getenv("server") == "1" {
-		fmt.Printf("start server\n")
-		runServer()
-	} else {
-		fmt.Printf("start client\n")
-		attestation, err := os.ReadFile("/tmp/att.jsonl")
-		if err != nil {
-			fmt.Printf("Failed to read /tmp/att.jsonl: %v\n", err)
-			return
-		}
-		keyPath := "/tmp/cosign.pub"
-		payload, err := verifyattestation.VerifiedPayload(context.Background(), keyPath, attestation)
-		if err != nil {
-			fmt.Printf("Failed: %v\n", err)
-			return
-		} else {
-			fmt.Printf("yay: %v\n", string(payload))
-		}
+var (
+	privateKeyPath string
+)
 
+func main() {
+	flag.StringVar(&privateKeyPath, "private-key", "/tmp/cosign.key", "The path to the private key")
+	flag.Parse()
+
+	if privateKeyPath == "" {
+		log.Panicf("missing private key path")
 	}
+
+	fmt.Printf("start server\n")
+	runServer()
 }
