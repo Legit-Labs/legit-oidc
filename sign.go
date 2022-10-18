@@ -21,8 +21,6 @@ func CmdExec(args ...string) error {
 	return cmd.Run()
 }
 
-const OUT_PATH = "/tmp/unsigned-provenance.intoto.jsnol"
-
 func sign(ctx context.Context, keyRef string, payload legit_remote_attest.RemoteAttestationData) ([]byte, error) {
 	// fmt.Printf("got: %#v\n", payload)
 
@@ -32,7 +30,7 @@ func sign(ctx context.Context, keyRef string, payload legit_remote_attest.Remote
 
 	os.Setenv("PRIVATE_KEY_PATH", keyRef)
 
-	err := CmdExec("./generator", "attest", "--subjects", payload.SubjectsBase64, "--signature", "", "--predicate", OUT_PATH)
+	err := CmdExec("./generator", "attest", "--subjects", payload.SubjectsBase64, "--signature", "", "--predicate", "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to attest: %v", err)
 	}
