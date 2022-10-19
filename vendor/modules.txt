@@ -431,7 +431,7 @@ github.com/legit-labs/legit-attestation/pkg/legit_attest
 # github.com/legit-labs/legit-remote-provenance v0.0.0-20221019121912-b6c4db20cbbe
 ## explicit; go 1.19
 github.com/legit-labs/legit-remote-provenance/pkg/legit_remote_provenance
-# github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019135748-44fbbb5000e9
+# github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019144653-512af834b4c9
 ## explicit; go 1.19
 github.com/legit-labs/legit-remote-provenance-server/pkg/legit_remote_provenance_server
 # github.com/leodido/go-urn v1.2.1

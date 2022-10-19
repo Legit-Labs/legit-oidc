@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/legit-labs/legit-remote-provenance v0.0.0-20221019121912-b6c4db20cbbe
-	github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019135748-44fbbb5000e9
+	github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019144653-512af834b4c9
 )
 
 require (

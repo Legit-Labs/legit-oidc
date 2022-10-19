@@ -775,6 +775,8 @@ github.com/legit-labs/legit-remote-provenance v0.0.0-20221019121912-b6c4db20cbbe
 github.com/legit-labs/legit-remote-provenance v0.0.0-20221019121912-b6c4db20cbbe/go.mod h1:IlVbGD560Lq1hYRFNppAxr8/kPH6384BkSDGcH071zQ=
 github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019135748-44fbbb5000e9 h1:6/kAmKBd9BLZ8WoqFF9Q+zJcLRjKaaeaHqwIc0AZW+I=
 github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019135748-44fbbb5000e9/go.mod h1:MIXhPt+pnvgNC3MPhz9PvC4ictMu/urL8oJhqZs9eR0=
+github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019144653-512af834b4c9 h1:Mdr74FDH/IbQ9j+LfjUPjj0XdC3U6R6BS/Oxw+uLFPc=
+github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019144653-512af834b4c9/go.mod h1:MIXhPt+pnvgNC3MPhz9PvC4ictMu/urL8oJhqZs9eR0=
 github.com/leodido/go-urn v1.2.1 h1:BqpAaACuzVSgi/VLzGZIobT2z4v53pjosyNd9Yv6n/w=
 github.com/leodido/go-urn v1.2.1/go.mod h1:zt4jvISO2HfUBqxjfIshjdMTYS56ZS/qv49ictyFfxY=
 github.com/letsencrypt/boulder v0.0.0-20221012012759-0ca01ea9629b h1:KYjjQ48mEkQXr/GRW/ZTT9UwMhxomUXlUOfoyBl0xI4=
