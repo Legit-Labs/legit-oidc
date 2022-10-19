@@ -27,7 +27,7 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 		if verifyJwt {
 			log.Panicf("failed to verify jwt token: %v", err)
 		} else {
-			log.Panicf("continue although JWT verification failed because: %v", err)
+			log.Printf("continue although JWT verification failed because: %v", err)
 		}
 	}
 
