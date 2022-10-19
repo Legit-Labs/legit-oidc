@@ -2,9 +2,16 @@ package keyfunc
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
+
+// ErrInvalidHTTPStatusCode indicates that the HTTP status code is invalid.
+var ErrInvalidHTTPStatusCode = errors.New("invalid HTTP status code")
 
 // Options represents the configuration options for a JWKS.
 //
@@ -30,6 +37,16 @@ type Options struct {
 	// GivenKIDOverride will make a GivenKey override any keys with the same ID (`kid`) in the remote JWKS. The is only
 	// effectual if GivenKeys is provided.
 	GivenKIDOverride bool
+
+	// JWKUseWhitelist is a whitelist of JWK `use` parameter values that will restrict what keys can be returned for
+	// jwt.Keyfunc. The assumption is that jwt.Keyfunc is only used for JWT signature verification.
+	// The default behavior is to only return a JWK if its `use` parameter has the value `"sig"`, an empty string, or if
+	// the parameter was omitted entirely.
+	JWKUseWhitelist []JWKUse
+
+	// JWKUseNoWhitelist overrides the JWKUseWhitelist field and its default behavior. If set to true, all JWKs will be
+	// returned regardless of their `use` parameter value.
+	JWKUseNoWhitelist bool
 
 	// RefreshErrorHandler is a function that consumes errors that happen during a JWKS refresh. This is only effectual
 	// if a background refresh goroutine is active.
@@ -58,6 +75,29 @@ type Options struct {
 	// RequestFactory creates HTTP requests for the remote JWKS resource located at the given url. For example, an
 	// HTTP header could be added to indicate a User-Agent.
 	RequestFactory func(ctx context.Context, url string) (*http.Request, error)
+
+	// ResponseExtractor consumes a *http.Response and produces the raw JSON for the JWKS. By default, the
+	// ResponseExtractorStatusOK function is used. The default behavior changed in v1.4.0.
+	ResponseExtractor func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
+}
+
+// ResponseExtractorStatusOK is meant to be used as the ResponseExtractor field for Options. It confirms that response
+// status code is 200 OK and returns the raw JSON from the response body.
+func ResponseExtractorStatusOK(ctx context.Context, resp *http.Response) (json.RawMessage, error) {
+	//goland:noinspection GoUnhandledErrorResult
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%w: %d", ErrInvalidHTTPStatusCode, resp.StatusCode)
+	}
+	return io.ReadAll(resp.Body)
+}
+
+// ResponseExtractorStatusAny is meant to be used as the ResponseExtractor field for Options. It returns the raw JSON
+// from the response body regardless of the response status code.
+func ResponseExtractorStatusAny(ctx context.Context, resp *http.Response) (json.RawMessage, error) {
+	//goland:noinspection GoUnhandledErrorResult
+	defer resp.Body.Close()
+	return io.ReadAll(resp.Body)
 }
 
 // applyOptions applies the given options to the given JWKS.
@@ -73,6 +113,13 @@ func applyOptions(jwks *JWKS, options Options) {
 		}
 	}
 
+	if !options.JWKUseNoWhitelist {
+		jwks.jwkUseWhitelist = make(map[JWKUse]struct{})
+		for _, use := range options.JWKUseWhitelist {
+			jwks.jwkUseWhitelist[use] = struct{}{}
+		}
+	}
+
 	jwks.client = options.Client
 	jwks.givenKIDOverride = options.GivenKIDOverride
 	jwks.refreshErrorHandler = options.RefreshErrorHandler
@@ -81,4 +128,5 @@ func applyOptions(jwks *JWKS, options Options) {
 	jwks.refreshTimeout = options.RefreshTimeout
 	jwks.refreshUnknownKID = options.RefreshUnknownKID
 	jwks.requestFactory = options.RequestFactory
+	jwks.responseExtractor = options.ResponseExtractor
 }

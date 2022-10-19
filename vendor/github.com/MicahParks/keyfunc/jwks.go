@@ -4,12 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
 )
 
 var (
+	// ErrJWKUseWhitelist indicates that the given JWK was found, but its "use" parameter's value was not whitelisted.
+	ErrJWKUseWhitelist = errors.New(`the given JWK was found, but its "use" parameter's value was not whitelisted`)
+
 	// ErrKIDNotFound indicates that the given key ID was not found in the JWKS.
 	ErrKIDNotFound = errors.New("the given key ID was not found in the JWKS")
 
@@ -20,7 +24,20 @@ var (
 // ErrorHandler is a function signature that consumes an error.
 type ErrorHandler func(err error)
 
-// jsonWebKey represents a raw key inside a JWKS.
+const (
+	// UseEncryption is a JWK "use" parameter value indicating the JSON Web Key is to be used for encryption.
+	UseEncryption JWKUse = "enc"
+	// UseOmitted is a JWK "use" parameter value that was not specified or was empty.
+	UseOmitted JWKUse = ""
+	// UseSignature is a JWK "use" parameter value indicating the JSON Web Key is to be used for signatures.
+	UseSignature JWKUse = "sig"
+)
+
+// JWKUse is a set of values for the "use" parameter of a JWK.
+// See https://tools.ietf.org/html/rfc7517#section-4.2.
+type JWKUse string
+
+// jsonWebKey represents a JSON Web Key inside a JWKS.
 type jsonWebKey struct {
 	Curve    string `json:"crv"`
 	Exponent string `json:"e"`
@@ -28,12 +45,20 @@ type jsonWebKey struct {
 	ID       string `json:"kid"`
 	Modulus  string `json:"n"`
 	Type     string `json:"kty"`
+	Use      string `json:"use"`
 	X        string `json:"x"`
 	Y        string `json:"y"`
 }
 
+// parsedJWK represents a JSON Web Key parsed with fields as the correct Go types.
+type parsedJWK struct {
+	use    JWKUse
+	public interface{}
+}
+
 // JWKS represents a JSON Web Key Set (JWK Set).
 type JWKS struct {
+	jwkUseWhitelist     map[JWKUse]struct{}
 	cancel              context.CancelFunc
 	client              *http.Client
 	ctx                 context.Context
@@ -41,7 +66,7 @@ type JWKS struct {
 	givenKeys           map[string]GivenKey
 	givenKIDOverride    bool
 	jwksURL             string
-	keys                map[string]interface{}
+	keys                map[string]parsedJWK
 	mux                 sync.RWMutex
 	refreshErrorHandler ErrorHandler
 	refreshInterval     time.Duration
@@ -50,6 +75,7 @@ type JWKS struct {
 	refreshTimeout      time.Duration
 	refreshUnknownKID   bool
 	requestFactory      func(ctx context.Context, url string) (*http.Request, error)
+	responseExtractor   func(ctx context.Context, resp *http.Response) (json.RawMessage, error)
 }
 
 // rawJWKS represents a JWKS in JSON format.
@@ -67,7 +93,7 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 
 	// Iterate through the keys in the raw JWKS. Add them to the JWKS.
 	jwks = &JWKS{
-		keys: make(map[string]interface{}, len(rawKS.Keys)),
+		keys: make(map[string]parsedJWK, len(rawKS.Keys)),
 	}
 	for _, key := range rawKS.Keys {
 		var keyInter interface{}
@@ -97,7 +123,10 @@ func NewJSON(jwksBytes json.RawMessage) (jwks *JWKS, err error) {
 			continue
 		}
 
-		jwks.keys[key.ID] = keyInter
+		jwks.keys[key.ID] = parsedJWK{
+			use:    JWKUse(key.Use),
+			public: keyInter,
+		}
 	}
 
 	return jwks, nil
@@ -124,6 +153,13 @@ func (j *JWKS) KIDs() (kids []string) {
 	return kids
 }
 
+// Len returns the number of keys in the JWKS.
+func (j *JWKS) Len() int {
+	j.mux.RLock()
+	defer j.mux.RUnlock()
+	return len(j.keys)
+}
+
 // RawJWKS returns a copy of the raw JWKS received from the given JWKS URL.
 func (j *JWKS) RawJWKS() []byte {
 	j.mux.RLock()
@@ -138,7 +174,7 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 	keys := make(map[string]interface{})
 	j.mux.Lock()
 	for kid, cryptoKey := range j.keys {
-		keys[kid] = cryptoKey
+		keys[kid] = cryptoKey.public
 	}
 	j.mux.Unlock()
 	return keys
@@ -147,35 +183,43 @@ func (j *JWKS) ReadOnlyKeys() map[string]interface{} {
 // getKey gets the jsonWebKey from the given KID from the JWKS. It may refresh the JWKS if configured to.
 func (j *JWKS) getKey(kid string) (jsonKey interface{}, err error) {
 	j.mux.RLock()
-	jsonKey, ok := j.keys[kid]
+	pubKey, ok := j.keys[kid]
 	j.mux.RUnlock()
 
 	if !ok {
-		if j.refreshUnknownKID {
-			ctx, cancel := context.WithCancel(j.ctx)
-
-			// Refresh the JWKS.
-			select {
-			case <-j.ctx.Done():
-				return
-			case j.refreshRequests <- cancel:
-			default:
-				// If the j.refreshRequests channel is full, return the error early.
-				return nil, ErrKIDNotFound
-			}
-
-			// Wait for the JWKS refresh to finish.
-			<-ctx.Done()
-
-			j.mux.RLock()
-			defer j.mux.RUnlock()
-			if jsonKey, ok = j.keys[kid]; ok {
-				return jsonKey, nil
-			}
+		if !j.refreshUnknownKID {
+			return nil, ErrKIDNotFound
 		}
 
-		return nil, ErrKIDNotFound
+		ctx, cancel := context.WithCancel(j.ctx)
+
+		// Refresh the JWKS.
+		select {
+		case <-j.ctx.Done():
+			return
+		case j.refreshRequests <- cancel:
+		default:
+			// If the j.refreshRequests channel is full, return the error early.
+			return nil, ErrKIDNotFound
+		}
+
+		// Wait for the JWKS refresh to finish.
+		<-ctx.Done()
+
+		j.mux.RLock()
+		defer j.mux.RUnlock()
+		if pubKey, ok = j.keys[kid]; !ok {
+			return nil, ErrKIDNotFound
+		}
 	}
 
-	return jsonKey, nil
+	// jwkUseWhitelist might be empty if the jwks was from keyfunc.NewJSON() or if JWKUseNoWhitelist option was true.
+	if len(j.jwkUseWhitelist) > 0 {
+		_, ok = j.jwkUseWhitelist[pubKey.use]
+		if !ok {
+			return nil, fmt.Errorf(`%w: JWK "use" parameter value %q is not whitelisted`, ErrJWKUseWhitelist, pubKey.use)
+		}
+	}
+
+	return pubKey.public, nil
 }

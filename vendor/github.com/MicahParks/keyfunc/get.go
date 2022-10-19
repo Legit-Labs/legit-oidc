@@ -3,7 +3,7 @@ package keyfunc
 import (
 	"bytes"
 	"context"
-	"io"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -29,8 +29,17 @@ func Get(jwksURL string, options Options) (jwks *JWKS, err error) {
 	if jwks.requestFactory == nil {
 		jwks.requestFactory = defaultRequestFactory
 	}
+	if jwks.responseExtractor == nil {
+		jwks.responseExtractor = ResponseExtractorStatusOK
+	}
 	if jwks.refreshTimeout == 0 {
 		jwks.refreshTimeout = defaultRefreshTimeout
+	}
+	if !options.JWKUseNoWhitelist && len(jwks.jwkUseWhitelist) == 0 {
+		jwks.jwkUseWhitelist = map[JWKUse]struct{}{
+			UseOmitted:   {},
+			UseSignature: {},
+		}
 	}
 
 	err = jwks.refresh()
@@ -141,19 +150,17 @@ func (j *JWKS) refresh() (err error) {
 
 	req, err := j.requestFactory(ctx, j.jwksURL)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create request via factory function: %w", err)
 	}
 
 	resp, err := j.client.Do(req)
 	if err != nil {
 		return err
 	}
-	//goland:noinspection GoUnhandledErrorResult
-	defer resp.Body.Close()
 
-	jwksBytes, err := io.ReadAll(resp.Body)
+	jwksBytes, err := j.responseExtractor(ctx, resp)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to extract response via extractor function: %w", err)
 	}
 
 	// Only reprocess if the JWKS has changed.
@@ -180,7 +187,7 @@ func (j *JWKS) refresh() (err error) {
 				}
 			}
 
-			j.keys[kid] = key.inter
+			j.keys[kid] = parsedJWK{public: key.inter}
 		}
 	}
 

@@ -3,9 +3,8 @@ module legit-oidc
 go 1.18
 
 require (
-	github.com/MicahParks/keyfunc v1.2.2
-	github.com/golang-jwt/jwt/v4 v4.4.2
-	github.com/legit-labs/legit-attestation v0.0.0-20221018132223-87266eb7efe9
+	github.com/legit-labs/legit-remote-provenance v0.0.0-20221019121912-b6c4db20cbbe
+	github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019135748-44fbbb5000e9
 )
 
 require (
@@ -17,6 +16,7 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
+	github.com/MicahParks/keyfunc v1.5.1 // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20210307081110-f21760c49a8d // indirect
 	github.com/benbjohnson/clock v1.3.0 // indirect
@@ -62,6 +62,7 @@ require (
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/golang-jwt/jwt/v4 v4.4.2 // indirect
 	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -93,6 +94,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.15.11 // indirect
+	github.com/legit-labs/legit-attestation v0.0.0-20221019122229-1a1772b5c712 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/letsencrypt/boulder v0.0.0-20221012012759-0ca01ea9629b // indirect
 	github.com/magiconair/properties v1.8.6 // indirect

@@ -70,7 +70,7 @@ jwksURL := os.Getenv("JWKS_URL")
 
 // Confirm the environment variable is not empty.
 if jwksURL == "" {
-	log.Fatalln("JWKS_URL environment variable must be populated.")
+log.Fatalln("JWKS_URL environment variable must be populated.")
 }
 ```
 
@@ -79,9 +79,9 @@ if jwksURL == "" {
 Via HTTP:
 ```go
 // Create the JWKS from the resource at the given URL.
-jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{})
+jwks, err := keyfunc.Get(jwksURL, keyfunc.Options{}) // See recommended options in the examples directory.
 if err != nil {
-	log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err)
+log.Fatalf("Failed to get the JWKS from the given URL.\nError: %s", err)
 }
 ```
 Via JSON:
@@ -92,7 +92,7 @@ var jwksJSON = json.RawMessage(`{"keys":[{"kid":"zXew0UJ1h6Q4CCcd_9wxMzvcp5cEBif
 // Create the JWKS from the resource at the given URL.
 jwks, err := keyfunc.NewJSON(jwksJSON)
 if err != nil {
-	log.Fatalf("Failed to create JWKS from JSON.\nError: %s", err)
+log.Fatalf("Failed to create JWKS from JSON.\nError: %s", err)
 }
 ```
 Via a given key:
@@ -103,7 +103,7 @@ uniqueKeyID := "myKeyID"
 
 // Create the JWKS from the HMAC key.
 jwks := keyfunc.NewGiven(map[string]keyfunc.GivenKey{
-	uniqueKeyID: keyfunc.NewGivenHMAC(key),
+uniqueKeyID: keyfunc.NewGivenHMAC(key),
 })
 ```
 
@@ -117,7 +117,7 @@ features mentioned at the bottom of this `README.md`.
 // Parse the JWT.
 token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
 if err != nil {
-	return nil, fmt.Errorf("failed to parse token: %w", err)
+return nil, fmt.Errorf("failed to parse token: %w", err)
 }
 ```
 
@@ -151,6 +151,19 @@ These features can be configured by populating fields in the
 * A custom HTTP client can be used.
 * A custom HTTP request factory can be provided to create HTTP requests for the remote JWKS resource. For example, an
   HTTP header can be added to indicate a User-Agent.
+* A custom HTTP response extractor can be provided to get the raw JWKS JSON from the `*http.Response`. For example, the
+  HTTP response code could be checked. Implementations are responsible for closing the response body.
+	* By default,
+	  the [`keyfunc.ResponseExtractorStatusOK`](https://pkg.go.dev/github.com/MicahParks/keyfunc#ResponseExtractorStatusOK)
+	  function is used. The default behavior changed in `v1.4.0`.
+* A custom whitelist of acceptable JSON Web Key `"use"` parameter values can be specified. Values not whitelisted will
+  cause an error from the [`.Keyfunc`](https://pkg.go.dev/github.com/MicahParks/keyfunc#JWKS.Keyfunc) method. This
+  whitelist can be disabled with the `JWKUseNoWhitelist` option.
+	* By default, only JSON Web Keys with a `"use"` parameter value of `"sig"`, an empty string `""`, or a completely
+	  omitted `"use"` parameter will be returned. The default behavior changed in `v1.5.0`.
+	* This `"use"` whitelisting behavior is only available with `keyfunc.Get`. It is not available with
+	  `keyfunc.NewJSON` or `keyfunc.NewGiven`. Please open a GitHub issue if you would like this feature added to the
+	  other creation methods.
 * A map of JWT key IDs (`kid`) to keys can be given and used for the `jwt.Keyfunc`. For an example, see
   the `examples/given` directory.
 * A copy of the latest raw JWKS `[]byte` can be returned.
@@ -168,7 +181,7 @@ However, this package will remove trailing padding on base64url encoded keys to 
 JWKS.
 
 ## References
-This project was built and tested used various RFCs and services. The services are listed below:
+This project was built and tested using various RFCs and services. The services are listed below:
 * [Keycloak](https://www.keycloak.org/)
 * [Sample JWKS Service](https://jwks-service.appspot.com/)
 * connect2id's [Server JWKSet Gen](https://connect2id.com/products/server/docs/config/jwk-set)

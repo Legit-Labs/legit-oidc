@@ -5,93 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 
-	"github.com/MicahParks/keyfunc"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/legit-labs/legit-attestation/pkg/legit_remote_attest"
+	"github.com/legit-labs/legit-remote-provenance-server/pkg/legit_remote_provenance_server"
+	"github.com/legit-labs/legit-remote-provenance/pkg/legit_remote_provenance"
 )
-
-func getJwks() ([]byte, error) {
-	resp, err := http.Get("https://token.actions.githubusercontent.com/.well-known/jwks")
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	return body, nil
-}
-
-func parseToken(jwtB64 string, jkwsJSON []byte) (*jwt.Token, error) {
-	// Create the JWKS from the resource at the given URL.
-	jwks, err := keyfunc.NewJSON(jkwsJSON)
-	if err != nil {
-		log.Fatalf("Failed to create JWKS from resource at the given URL.\nError: %s", err.Error())
-	}
-
-	// Parse the JWT.
-	token, err := jwt.Parse(jwtB64, jwks.Keyfunc)
-	if err != nil {
-		return nil, fmt.Errorf("Failed to parse the JWT.\nError: %s", err.Error())
-	}
-
-	return token, nil
-}
-
-func verify(jwtB64 string) (*jwt.Token, error) {
-	jkws, err := getJwks()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get jkws: %v", err)
-	}
-
-	token, err := parseToken(jwtB64, jkws)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get token: %v", err)
-	}
-
-	// Check if the token is valid.
-	if !token.Valid {
-		return nil, fmt.Errorf("The token is not valid.")
-	}
-
-	log.Println("The token is valid.")
-	return token, nil
-}
-
-func verifyClaims(token *jwt.Token) error {
-	fmt.Printf("get claims...\n")
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return fmt.Errorf("failed to parse claims")
-	}
-
-	fmt.Printf("check exists...\n")
-	_jobRef, exist := claims["job_workflow_ref"]
-	if !exist {
-		return fmt.Errorf("missing job workflow ref")
-	}
-
-	fmt.Printf("get jobref...\n")
-	jobRef, ok := _jobRef.(string)
-	if !ok {
-		return fmt.Errorf("failed to parse job ref")
-	}
-
-	fmt.Printf("check jobref...\n")
-	if !strings.HasPrefix(strings.ToLower(jobRef), "legit-labs") { // TODO full name
-		return fmt.Errorf("bad workflow ref")
-	}
-
-	return nil
-}
 
 func jwtPost(w http.ResponseWriter, req *http.Request) {
 	if req.Method != "POST" {
@@ -100,35 +20,14 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	bypass_jwt := os.Getenv("bypass_jwt") == "1"
-	fmt.Printf("bypass_jwt? %v\n", bypass_jwt)
-
-	jwt := req.Header.Get("jwt")
-	if jwt == "" && !bypass_jwt {
-		fmt.Printf("no auth header\n")
-		http.Error(w, "no auth header", http.StatusBadRequest)
-		return
+	verifyJwt := os.Getenv("bypass_jwt") != "1"
+	jwtB64 := req.Header.Get("jwt")
+	verifier := legit_remote_provenance_server.NewJwtVerifier(verifyJwt)
+	if err := verifier.Verify(jwtB64); err != nil {
+		log.Panicf("failed to verify jwt token")
 	}
 
-	if !bypass_jwt {
-		fmt.Printf("verify token\n")
-		token, err := verify(jwt)
-		if err != nil {
-			fmt.Printf("jwt verification failed: %v\n", err)
-			http.Error(w, "jwt verification failed", http.StatusBadRequest)
-			return
-		}
-
-		fmt.Printf("verify claims\n")
-		if err := verifyClaims(token); err != nil {
-			fmt.Printf("jwt claims failed: %v\n", err)
-			http.Error(w, "jwt claims failed", http.StatusBadRequest)
-			return
-		}
-	}
-
-	fmt.Printf("check payload\n")
-	var payload legit_remote_attest.RemoteAttestationData
+	var payload legit_remote_provenance.RemoteAttestationData
 	err := json.NewDecoder(req.Body).Decode(&payload)
 	if err != nil {
 		fmt.Printf("missing attestation payload\n")
@@ -136,20 +35,21 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	attestation, err := sign(context.Background(), privateKeyPath, payload)
+	pg := legit_remote_provenance_server.NewProvenanceGenerator(context.Background(), privateKeyPath)
+	signedProv, err := pg.GenerateSignedProvenance(payload)
 	if err != nil {
-		fmt.Printf("sign error: %v\n", err)
-		http.Error(w, "failed to sign attestation", http.StatusInternalServerError)
-		return
+		log.Fatalf("failed to generate provenance: %v", err)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, err = w.Write(attestation)
+	_, err = w.Write(signedProv)
 	if err != nil {
 		fmt.Printf("write error: %v\n", err)
 		http.Error(w, "failed to write attestation", http.StatusInternalServerError)
 		return
 	}
+
+	fmt.Printf("Successfully generated and replied a signed provenance.")
 }
 
 func runServer() {

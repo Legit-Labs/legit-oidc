@@ -23,7 +23,7 @@ github.com/Azure/go-autorest/logger
 # github.com/Azure/go-autorest/tracing v0.6.0
 ## explicit; go 1.12
 github.com/Azure/go-autorest/tracing
-# github.com/MicahParks/keyfunc v1.2.2
+# github.com/MicahParks/keyfunc v1.5.1
 ## explicit; go 1.16
 github.com/MicahParks/keyfunc
 # github.com/ThalesIgnite/crypto11 v1.2.5
@@ -425,10 +425,15 @@ github.com/klauspost/compress/internal/cpuinfo
 github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/zstd
 github.com/klauspost/compress/zstd/internal/xxhash
-# github.com/legit-labs/legit-attestation v0.0.0-20221018132223-87266eb7efe9
+# github.com/legit-labs/legit-attestation v0.0.0-20221019122229-1a1772b5c712
 ## explicit; go 1.18
 github.com/legit-labs/legit-attestation/pkg/legit_attest
-github.com/legit-labs/legit-attestation/pkg/legit_remote_attest
+# github.com/legit-labs/legit-remote-provenance v0.0.0-20221019121912-b6c4db20cbbe
+## explicit; go 1.19
+github.com/legit-labs/legit-remote-provenance/pkg/legit_remote_provenance
+# github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019135748-44fbbb5000e9
+## explicit; go 1.19
+github.com/legit-labs/legit-remote-provenance-server/pkg/legit_remote_provenance_server
 # github.com/leodido/go-urn v1.2.1
 ## explicit; go 1.13
 github.com/leodido/go-urn

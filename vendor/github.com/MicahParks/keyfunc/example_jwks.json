@@ -118,6 +118,13 @@
       "use": "sig",
       "kid": "hmac",
       "k": "V_8Ob8dVs6JuZx6expyjShoUgFgxoaovGjmGhesL2jA"
+    },
+    {
+      "e": "AQAB",
+      "use": "enc",
+      "kid": "kidWithBadUse",
+      "kty": "RSA",
+      "n": "znO8fsURSvghcjbMu2nysqZhsreTkj-y46YL39kctmlj7-qqVLuvTUtw0XvsxwLi9WWczz_BsAm2Rn6LzyhvXUXjj6uMP8tk-HhWc4RMXP-esqB7y6WUmR8SioT94SykuVhWMDxwkg7kXTg_GWEYibEFJ7YM16vVZ2Na5z2vRfMRy7VARXRhDrinJmW0B-oY9FurPTyaZSDqOr-3Qkhk1jm9-6ygFsOkmnd4Ljnq28t8hq_4k3bdZSolZv11boQS8vDO-Fo_2YoQVxm4YMIjcr8bxZcali2slOEytEC5ItOKTPA_CydM62sJubw7MuTrOKh6GJrq0xnw6MtqR46-MQ"
     }
   ]
 }

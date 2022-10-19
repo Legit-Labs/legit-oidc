@@ -1,4 +1,4 @@
-package legit_remote_attest
+package legit_remote_provenance
 
 import (
 	"bytes"

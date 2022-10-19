@@ -1,4 +1,4 @@
-package legit_remote_attest
+package legit_remote_provenance
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 
 const (
 	// See https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#updating-your-actions-for-oidc
-	REQ_AUDIENCE = "Legit Security"
+	REQ_AUDIENCE = "legit-security-provenance-generator"
 	REQ_TOKEN    = "ACTIONS_ID_TOKEN_REQUEST_TOKEN"
 	REQ_URL      = "ACTIONS_ID_TOKEN_REQUEST_URL"
 )
