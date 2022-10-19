@@ -29,6 +29,7 @@ func sign(ctx context.Context, keyRef string, payload legit_remote_attest.Remote
 		return nil, fmt.Errorf("failed to apply env: %v", err)
 	}
 
+	// TODO we need to bundle the generator with this signer (docker(?))
 	output, err := CmdExec("./generator", "attest", "--subjects", payload.SubjectsBase64, "--signature", "", "--predicate", "")
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate provenance: %v", err)
