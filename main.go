@@ -24,7 +24,7 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 	jwtB64 := req.Header.Get("jwt")
 	verifier := legit_remote_provenance_server.NewJwtVerifier(verifyJwt)
 	if err := verifier.Verify(jwtB64); err != nil {
-		log.Panicf("failed to verify jwt token")
+		log.Panicf("failed to verify jwt token [verify=%v]: %v", verifyJwt, err)
 	}
 
 	var payload legit_remote_provenance.RemoteAttestationData
