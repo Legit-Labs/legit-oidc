@@ -53,6 +53,8 @@ func jwtPost(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	os.WriteFile("/tmp/latest.intoto.jsonl", signedProv, 0644)
+
 	fmt.Printf("Successfully generated and replied a signed provenance.")
 }
 
