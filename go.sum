@@ -773,8 +773,6 @@ github.com/legit-labs/legit-attestation v0.0.0-20221019122229-1a1772b5c712 h1:lC
 github.com/legit-labs/legit-attestation v0.0.0-20221019122229-1a1772b5c712/go.mod h1:Fn4yf4KpS4wBkEP0d1iOlq7LId7ivMn929h9B1rw+aE=
 github.com/legit-labs/legit-remote-provenance v0.0.0-20221019121912-b6c4db20cbbe h1:J16+n1pYqxJ4Gb4JH6bwzhGOAZNXdQY4DzQIfhe+88w=
 github.com/legit-labs/legit-remote-provenance v0.0.0-20221019121912-b6c4db20cbbe/go.mod h1:IlVbGD560Lq1hYRFNppAxr8/kPH6384BkSDGcH071zQ=
-github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019135748-44fbbb5000e9 h1:6/kAmKBd9BLZ8WoqFF9Q+zJcLRjKaaeaHqwIc0AZW+I=
-github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019135748-44fbbb5000e9/go.mod h1:MIXhPt+pnvgNC3MPhz9PvC4ictMu/urL8oJhqZs9eR0=
 github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019144653-512af834b4c9 h1:Mdr74FDH/IbQ9j+LfjUPjj0XdC3U6R6BS/Oxw+uLFPc=
 github.com/legit-labs/legit-remote-provenance-server v0.0.0-20221019144653-512af834b4c9/go.mod h1:MIXhPt+pnvgNC3MPhz9PvC4ictMu/urL8oJhqZs9eR0=
 github.com/leodido/go-urn v1.2.1 h1:BqpAaACuzVSgi/VLzGZIobT2z4v53pjosyNd9Yv6n/w=
